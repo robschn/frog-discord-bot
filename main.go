@@ -53,13 +53,22 @@ func main() {
 	dg.Close()
 }
 
-var pronounMap = map[string]string{
+type emojiInfo struct {
+	eName    string
+	eMessage string
+	eGuild   string
+	eUser    string
+}
+
+type emojiMap map[string]string
+
+var pronounMap = emojiMap{
 	"🦋": "761015648494288926", // they/them
 	"🐝": "761016805229461505", // she/her
 	"🪲": "761016870286655509", // he/him
 }
 
-var cosmoMap = map[string]string{
+var cosmoMap = emojiMap{
 	"♈": "874347037167058964", // Aries
 	"♉": "874347209401974824", // Taurus
 	"♊": "874347353979645993", // Gemini
@@ -90,29 +99,49 @@ func emojiCheck(emoji string) (string, bool) {
 	}
 }
 
+func changeRole(s *discordgo.Session, i *emojiInfo, f bool) {
+
+	// Check to see if emoji is our list
+	value, ok := emojiCheck(i.eName)
+	if ok {
+		// Check if the emoji was made in another message
+		if i.eMessage == pronounsMessage || i.eMessage == signsMessage {
+			// Add or Remove Role based on f flag
+			if f {
+				s.GuildMemberRoleAdd(i.eGuild, i.eUser, value)
+			} else {
+				s.GuildMemberRoleRemove(i.eGuild, i.eUser, value)
+			}
+		}
+	}
+}
+
 // Capture reactions added
 func reactionAdd(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 
-	// Check to see if emoji is our list
-	value, ok := emojiCheck(e.Emoji.Name)
-	if ok {
-		// 				  Message ID for pronouns				 Message ID for pronouns
-		if e.MessageID == pronounsMessage || e.MessageID == signsMessage {
-			// if added change Role
-			s.GuildMemberRoleAdd(e.GuildID, e.UserID, value)
-		}
+	// Construct emojiInfo
+	addEmoji := emojiInfo{
+		eName:    e.Emoji.Name,
+		eMessage: e.MessageID,
+		eGuild:   e.GuildID,
+		eUser:    e.UserID,
 	}
+
+	// Call Add role with true flag
+	changeRole(s, &addEmoji, true)
 }
 
 // Capture reactions removed
 func reactionRemove(s *discordgo.Session, e *discordgo.MessageReactionRemove) {
 
-	// Check to see if emoji is our list
-	value, ok := emojiCheck(e.Emoji.Name)
-	if ok {
-		if e.MessageID == pronounsMessage || e.MessageID == signsMessage {
-			// if removed change Role
-			s.GuildMemberRoleRemove(e.GuildID, e.UserID, value)
-		}
+	// Construct emojiInfo
+	removeEmoji := emojiInfo{
+		eName:    e.Emoji.Name,
+		eMessage: e.MessageID,
+		eGuild:   e.GuildID,
+		eUser:    e.UserID,
 	}
+
+	// Call Add role with true flag
+	changeRole(s, &removeEmoji, false)
 }
