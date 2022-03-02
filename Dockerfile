@@ -8,4 +8,4 @@ RUN go mod download && go mod verify
 
 RUN go build -v -o /usr/local/bin/app ./...
 
-CMD ["app", "-t", "${DISCORD_TOKEN}"]
+ENTRYPOINT [ "app" ]
