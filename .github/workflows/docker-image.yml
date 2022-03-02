@@ -16,10 +16,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag frog-bot:$(date +%s)
+      run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/frog-bot:$(date +%s)
 
     - name: Login to Docker Hub
       run: docker login -u="${{ secrets.DOCKER_USERNAME }}" -p="${{ secrets.DOCKER_PASSWORD }}"
 
     - name: Push to Docker Hub
-      run: docker push robschn/frog-bot:$(date +%s)
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/frog-bot:$(date +%s)
