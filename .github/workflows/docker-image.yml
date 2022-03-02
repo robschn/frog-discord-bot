@@ -28,5 +28,5 @@ jobs:
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/frog-bot:$(date +%s)
+            ${{ secrets.DOCKER_USERNAME }}/frog-bot:$CI_COMMIT_TAG
             ${{ secrets.DOCKER_USERNAME }}/frog-bot:latest
