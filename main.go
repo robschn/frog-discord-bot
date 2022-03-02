@@ -142,6 +142,6 @@ func reactionRemove(s *discordgo.Session, e *discordgo.MessageReactionRemove) {
 		eUser:    e.UserID,
 	}
 
-	// Call Add role with true flag
+	// Call Remove role with false flag
 	changeRole(s, &removeEmoji, false)
 }
