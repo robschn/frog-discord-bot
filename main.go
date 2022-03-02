@@ -54,17 +54,19 @@ func main() {
 }
 
 var emojiMap = map[string]string{
-	"🦋": "761015648494288926",
-	"🐝": "761016805229461505",
-	"🪲": "761016870286655509",
+	"🦋": "761015648494288926", // they/them
+	"🐝": "761016805229461505", // she/her
+	"🪲": "761016870286655509", // he/him
 }
 
 // Capture reactions added
 func reactionAdd(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
+
+	// Check to see if emoji is our list
 	value, ok := emojiMap[e.Emoji.Name]
 	if ok {
 		if e.MessageID == "866078211628073011" {
-			// if added do something in Roles
+			// if added change Role
 			s.GuildMemberRoleAdd(e.GuildID, e.UserID, value)
 		}
 	}
@@ -72,11 +74,13 @@ func reactionAdd(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 
 // Capture reactions removed
 func reactionRemove(s *discordgo.Session, e *discordgo.MessageReactionRemove) {
+
+	// Check to see if emoji is our list
 	value, ok := emojiMap[e.Emoji.Name]
 	if ok {
 		if e.MessageID == "866078211628073011" {
-			// if added do something in Roles
-			s.GuildMemberRoleAdd(e.GuildID, e.UserID, value)
+			// if removed change Role
+			s.GuildMemberRoleRemove(e.GuildID, e.UserID, value)
 		}
 	}
 }
