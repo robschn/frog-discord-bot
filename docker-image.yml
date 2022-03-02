@@ -1,0 +1,25 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag frog-bot:$(date +%s) -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+      
+    - name: Login to Docker Hub
+      run: docker login -u="${{ secrets.DOCKER_USERNAME }}" -p="${{ secrets.DOCKER_PASSWORD }}"
+      
+    - name: Push to Docker Hub
+      run: docker push robschn/frog-bot:$(date +%s)
