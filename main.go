@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -26,12 +25,13 @@ func main() {
 	// Create a new Discord session using the provided bot token.
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		fmt.Println("Error creating Discord session,", err)
 		return
 	}
 
-	// Register the reactionAdd func as a callback for MessageReactionAdd events.
+	// Register the functions with for their callback events.
 	dg.AddHandler(reactionAdd)
+	dg.AddHandler(reactionRemove)
 
 	// Set Identity Intent for MessageReactions
 	dg.Identify.Intents = discordgo.IntentsGuildMessageReactions
@@ -46,7 +46,7 @@ func main() {
 	// Wait here until CTRL-C or other term signal is received.
 	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, os.Interrupt)
 	<-sc
 
 	// Cleanly close down the Discord session.
@@ -56,7 +56,15 @@ func main() {
 func reactionAdd(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
 
 	if e.Emoji.Name == "🥰" {
-		fmt.Println("Hello")
+		fmt.Println("Add")
+	}
+
+}
+
+func reactionRemove(s *discordgo.Session, e *discordgo.MessageReactionRemove) {
+
+	if e.Emoji.Name == "🥰" {
+		fmt.Println("Remove")
 	}
 
 }
