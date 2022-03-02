@@ -53,18 +53,30 @@ func main() {
 	dg.Close()
 }
 
-func reactionAdd(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
-
-	if e.Emoji.Name == "🥰" {
-		fmt.Println("Add")
-	}
-
+var emojiMap = map[string]string{
+	"🦋": "761015648494288926",
+	"🐝": "761016805229461505",
+	"🪲": "761016870286655509",
 }
 
-func reactionRemove(s *discordgo.Session, e *discordgo.MessageReactionRemove) {
-
-	if e.Emoji.Name == "🥰" {
-		fmt.Println("Remove")
+// Capture reactions added
+func reactionAdd(s *discordgo.Session, e *discordgo.MessageReactionAdd) {
+	value, ok := emojiMap[e.Emoji.Name]
+	if ok {
+		if e.MessageID == "866078211628073011" {
+			// if added do something in Roles
+			s.GuildMemberRoleAdd(e.GuildID, e.UserID, value)
+		}
 	}
+}
 
+// Capture reactions removed
+func reactionRemove(s *discordgo.Session, e *discordgo.MessageReactionRemove) {
+	value, ok := emojiMap[e.Emoji.Name]
+	if ok {
+		if e.MessageID == "866078211628073011" {
+			// if added do something in Roles
+			s.GuildMemberRoleAdd(e.GuildID, e.UserID, value)
+		}
+	}
 }
