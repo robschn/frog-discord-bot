@@ -27,4 +27,6 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/frog-bot:$(date +%s)
+            ${{ secrets.DOCKER_USERNAME }}/frog-bot:latest
