@@ -30,6 +30,7 @@ func auth() {
 	// Register the functions with for their callback events.
 	dg.AddHandler(reactionAdd)
 	dg.AddHandler(reactionRemove)
+	dg.AddHandler(listenForPoll)
 
 	// Set Identity Intent for MessageReactions
 	dg.Identify.Intents = discordgo.IntentsGuildMessageReactions
