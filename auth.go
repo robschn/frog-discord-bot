@@ -33,8 +33,7 @@ func auth() {
 	dg.AddHandler(listenForPoll)
 
 	// Set Identity Intent for MessageReactions
-	dg.Identify.Intents = discordgo.IntentsGuildMessageReactions
-
+	dg.Identify.Intents = discordgo.IntentsGuildMessages
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
