@@ -19,9 +19,9 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 			pickedMovies := jsonToPoll(3)
 
 			// format to add 7 days to current date
-			nextWeek := time.Now().AddDate(0, 0, 7)
+			nextWeek := time.Now().AddDate(0, 0, 6)
 			formatWeek := fmt.Sprintf("%s, %v\n", nextWeek.Month(), nextWeek.Day())
-			emojiMessage := `@here
+			emojiMessage := `(A)here
 
 MovieMonday™️ voting for %s
 🧡 - %s
@@ -41,6 +41,20 @@ Voting ends at midnight on Sunday.`
 			for _, i := range emojiList {
 				s.MessageReactionAdd(messageInfo.ChannelID, messageInfo.ID, i)
 			}
+
+			// sleep for a set time
+			time.Sleep(10 * time.Second)
+
+			// count emojis and pick winner
+			emojiCheck, _ := s.ChannelMessage(messageInfo.ChannelID, messageInfo.ID)
+
+			for _, e := range emojiCheck.Reactions {
+				fmt.Println(e.Count, e.Emoji.Name)
+				// if i > i+1 {
+
+				// }
+			}
+
 		}
 	}
 }
