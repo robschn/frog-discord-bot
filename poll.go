@@ -21,7 +21,7 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 			// format to add 7 days to current date
 			nextWeek := time.Now().AddDate(0, 0, 7)
 			formatWeek := fmt.Sprintf("%s, %v\n", nextWeek.Month(), nextWeek.Day())
-			emojiMessage := `<@here>
+			emojiMessage := `@here
 
 MovieMonday™️ voting for %s
 🧡 - %s
