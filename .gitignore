@@ -17,3 +17,5 @@
 .env
 
 test/
+
+movies.json
