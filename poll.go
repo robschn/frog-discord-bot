@@ -73,8 +73,8 @@ func jsonToPoll(limit int) []string {
 
 	var pickedMovies []string
 
-	// loop over the first 3 random indexes
-	for _, i := range randIndex[0:3] {
+	// loop over the random indexes from 0 to limit
+	for _, i := range randIndex[0:limit] {
 		movieInfo := fmt.Sprintf("%s (%v)", unwatchedMovies[i].Name, unwatchedMovies[i].Year)
 		pickedMovies = append(pickedMovies, movieInfo)
 	}
