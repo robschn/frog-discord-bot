@@ -37,24 +37,29 @@ Voting ends at midnight on Sunday.`
 			messageInfo, _ := s.ChannelMessageSend(e.ChannelID, votingMessage)
 
 			// add emojis to message
-			emojiList := [3]string{"🧡", "💛", "💚"}
-			for _, i := range emojiList {
+			emojiHash := map[string]string{
+				"🧡": pickedMovies[0],
+				"💛": pickedMovies[1],
+				"💚": pickedMovies[2],
+			}
+			for i := range emojiHash {
 				s.MessageReactionAdd(messageInfo.ChannelID, messageInfo.ID, i)
 			}
 
 			// sleep for a set time
 			time.Sleep(10 * time.Second)
 
-			// count emojis and pick winner
+			// grab message info
 			emojiCheck, _ := s.ChannelMessage(messageInfo.ChannelID, messageInfo.ID)
 
-			for _, e := range emojiCheck.Reactions {
-				fmt.Println(e.Count, e.Emoji.Name)
-				// if i > i+1 {
-
-				// }
+			// compare counts to return the highest in 0 index
+			for i := 1; i < len(emojiCheck.Reactions); i++ {
+				if emojiCheck.Reactions[0].Count < emojiCheck.Reactions[i].Count {
+					emojiCheck.Reactions[0] = emojiCheck.Reactions[i]
+				}
 			}
-
+			winnerMovie := fmt.Sprintf("The MovieMonday winner is %s !", emojiHash[emojiCheck.Reactions[0].Emoji.Name])
+			s.ChannelMessageSend(messageInfo.ChannelID, winnerMovie)
 		}
 	}
 }
