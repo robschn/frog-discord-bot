@@ -14,15 +14,13 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 	if e.ChannelID == "864719238279462912" {
 		// check for poll command
 		if e.Content == "!poll movie" {
+
 			// send message to user asking for the names of the 3 movies
 			pickedMovies := fetchMovies(3)
 
-			// format to add 7 days to current date
-			nextWeek := time.Now().AddDate(0, 0, 6)
-			formatWeek := fmt.Sprintf("%s, %v\n", nextWeek.Month(), nextWeek.Day())
 			emojiMessage := `(A)here
 
-MovieMonday™️ voting for %s
+MovieMonday™️ voting is starting!
 🧡 - %s
 💛 - %s
 💚 - %s
@@ -30,16 +28,16 @@ MovieMonday™️ voting for %s
 Please click on the emoji below to vote!
 Voting ends at midnight on Sunday.`
 
-			votingMessage := fmt.Sprintf(emojiMessage, formatWeek, pickedMovies[0], pickedMovies[1], pickedMovies[2])
+			votingMessage := fmt.Sprintf(emojiMessage, pickedMovies...)
 
 			// send message to channel
 			messageInfo, _ := s.ChannelMessageSend(e.ChannelID, votingMessage)
 
 			// add emojis to message
-			emojiHash := map[string]string{
-				"🧡": pickedMovies[0].Value,
-				"💛": pickedMovies[1].Value,
-				"💚": pickedMovies[2].Value,
+			emojiHash := map[string]interface{}{
+				"🧡": pickedMovies[0],
+				"💛": pickedMovies[1],
+				"💚": pickedMovies[2],
 			}
 
 			for i := range emojiHash {
@@ -67,7 +65,7 @@ Voting ends at midnight on Sunday.`
 	}
 }
 
-func fetchMovies(limit int) []redis.KeyValue {
+func fetchMovies(limit int) []interface{} {
 
 	ctx := context.TODO()
 
@@ -78,5 +76,14 @@ func fetchMovies(limit int) []redis.KeyValue {
 		DB:       0,
 	})
 
-	return r.HRandFieldWithValues(ctx, "unwatched", limit).Val()
+	redisMovies := r.HRandFieldWithValues(ctx, "unwatched", limit).Val()
+
+	pickedMovies := []interface{}{}
+
+	// loop over returned movies to grab just the value
+	for _, i := range redisMovies {
+		pickedMovies = append(pickedMovies, i.Value)
+	}
+
+	return pickedMovies
 }
