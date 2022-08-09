@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -11,12 +10,22 @@ import (
 )
 
 func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
+
 	if e.ChannelID == "864719238279462912" {
 		// check for poll command
 		if e.Content == "!poll movie" {
 
-			// send message to user asking for the names of the 3 movies
-			pickedMovies := fetchMovies(3)
+			// connect to redis database
+			ctx := context.TODO()
+
+			client := redis.NewClient(&redis.Options{
+				Addr:     *RedisUrl,
+				Password: *RedisPass,
+				DB:       0,
+			})
+
+			// grab 3 unwatched movies
+			pickedMovies := client.SRandMemberN(ctx, "unwatched", 3).Val()
 
 			emojiMessage := `(A)here
 
@@ -28,7 +37,7 @@ MovieMonday™️ voting is starting!
 Please click on the emoji below to vote!
 Voting ends at midnight on Sunday.`
 
-			votingMessage := fmt.Sprintf(emojiMessage, pickedMovies...)
+			votingMessage := fmt.Sprintf(emojiMessage, pickedMovies[0], pickedMovies[1], pickedMovies[2])
 
 			// send message to channel
 			messageInfo, _ := s.ChannelMessageSend(e.ChannelID, votingMessage)
@@ -56,34 +65,19 @@ Voting ends at midnight on Sunday.`
 					emojiCheck.Reactions[0] = emojiCheck.Reactions[i]
 				}
 			}
-			winnerMovie := fmt.Sprintf("The MovieMonday winner is %s !", emojiHash[emojiCheck.Reactions[0].Emoji.Name])
-			s.ChannelMessageSend(messageInfo.ChannelID, winnerMovie)
+			winnerMovie := emojiHash[emojiCheck.Reactions[0].Emoji.Name]
+			winnerMessage := fmt.Sprintf("The MovieMonday winner is **%s** !", emojiHash[emojiCheck.Reactions[0].Emoji.Name])
+			s.ChannelMessageSend(messageInfo.ChannelID, winnerMessage)
+
+			// move winnerMovie to watched
+			client.SMove(ctx, "unwatched", "watched", winnerMovie)
+
+			// close redis connection
+			client.Close()
 		}
+
 		if e.Content == "!poll upload" {
 
 		}
 	}
-}
-
-func fetchMovies(limit int) []interface{} {
-
-	ctx := context.TODO()
-
-	// connect to redis database
-	r := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_URL"),
-		Password: os.Getenv("REDIS_PASS"),
-		DB:       0,
-	})
-
-	redisMovies := r.HRandFieldWithValues(ctx, "unwatched", limit).Val()
-
-	pickedMovies := []interface{}{}
-
-	// loop over returned movies to grab just the value
-	for _, i := range redisMovies {
-		pickedMovies = append(pickedMovies, i.Value)
-	}
-
-	return pickedMovies
 }

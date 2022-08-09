@@ -10,18 +10,18 @@ import (
 )
 
 // Variables used for command line parameters
-var Token string
+var (
+	BotToken  = flag.String("t", "", "Discord bot access token")
+	RedisUrl  = flag.String("c", "", "Redis database URL to include port")
+	RedisPass = flag.String("p", "", "Redis database password")
+)
 
-func init() {
-
-	flag.StringVar(&Token, "t", "", "Bot Token")
-	flag.Parse()
-}
+func init() { flag.Parse() }
 
 func auth() {
 
 	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + Token)
+	dg, err := discordgo.New("Bot " + *BotToken)
 	if err != nil {
 		fmt.Println("Error creating Discord session,", err)
 		return
