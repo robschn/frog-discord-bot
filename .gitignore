@@ -15,3 +15,7 @@
 # vendor/
 
 .env
+
+test/
+
+movies.json
