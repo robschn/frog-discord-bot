@@ -13,7 +13,7 @@ import (
 
 func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 
-	if e.ChannelID == "864719238279462912" {
+	if e.ChannelID == "833899631330852934" {
 		// check for poll command
 		if strings.Contains(e.Content, "!poll movie") {
 
@@ -83,7 +83,7 @@ Voting ends in %v hours.`
 			s.ChannelMessageSend(messageInfo.ChannelID, winnerMessage)
 
 			// move winnerMovie to watched
-			// client.SMove(ctx, "unwatched", "watched", winnerMovie)
+			client.SMove(ctx, "unwatched", "watched", winnerMovie)
 
 			// close redis connection
 			client.Close()
@@ -104,6 +104,9 @@ Voting ends in %v hours.`
 				client.SAdd(ctx, "unwatched", movieName)
 
 				s.ChannelMessageSend(e.ChannelID, "Done!")
+
+				// close redis connection
+				client.Close()
 			}
 		}
 	}
