@@ -13,7 +13,7 @@ import (
 
 func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 
-	if e.ChannelID == "864719238279462912" {
+	if e.ChannelID == "833899631330852934" {
 		// check for poll command
 		if strings.Contains(e.Content, "!poll movie") {
 
