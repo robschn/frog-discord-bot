@@ -40,7 +40,7 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 			// grab 3 unwatched movies
 			pickedMovies := client.SRandMemberN(ctx, "unwatched", 3).Val()
 
-			emojiMessage := `(A)here
+			emojiMessage := `@here
 
 MovieMonday™️ voting is starting!
 🧡 - %s
@@ -67,7 +67,7 @@ Voting ends in %v hours.`
 			}
 
 			// sleep for time
-			// Check for Demo
+			// check for Demo
 			if *DemoMode {
 				time.Sleep(time.Duration(hoursSleep) * time.Second)
 			} else {
@@ -87,7 +87,7 @@ Voting ends in %v hours.`
 			winnerMessage := fmt.Sprintf("The MovieMonday winner is **%s** !", winnerMovie)
 			s.ChannelMessageSend(messageInfo.ChannelID, winnerMessage)
 
-			// Check for Demo
+			// check for Demo
 			if *DemoMode {
 				s.ChannelMessageSend(messageInfo.ChannelID, "*Demo mode enabled, database will not be affected.*")
 			} else {
