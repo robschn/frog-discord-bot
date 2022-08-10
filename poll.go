@@ -13,7 +13,7 @@ import (
 
 func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 
-	if e.ChannelID == "833899631330852934" {
+	if e.ChannelID == "864719238279462912" {
 		// check for poll command
 		if strings.Contains(e.Content, "!poll movie") {
 
@@ -67,7 +67,12 @@ Voting ends in %v hours.`
 			}
 
 			// sleep for time
-			time.Sleep(time.Duration(hoursSleep) * time.Second)
+			// Check for Demo
+			if *DemoMode {
+				time.Sleep(time.Duration(hoursSleep) * time.Second)
+			} else {
+				time.Sleep(time.Duration(hoursSleep) * time.Hour)
+			}
 
 			// grab message info
 			emojiCheck, _ := s.ChannelMessage(messageInfo.ChannelID, messageInfo.ID)
@@ -82,8 +87,13 @@ Voting ends in %v hours.`
 			winnerMessage := fmt.Sprintf("The MovieMonday winner is **%s** !", winnerMovie)
 			s.ChannelMessageSend(messageInfo.ChannelID, winnerMessage)
 
-			// move winnerMovie to watched
-			client.SMove(ctx, "unwatched", "watched", winnerMovie)
+			// Check for Demo
+			if *DemoMode {
+				s.ChannelMessageSend(messageInfo.ChannelID, "*Demo mode enabled, database will not be affected.*")
+			} else {
+				// move winnerMovie to watched
+				client.SMove(ctx, "unwatched", "watched", winnerMovie)
+			}
 
 			// close redis connection
 			client.Close()
@@ -101,7 +111,13 @@ Voting ends in %v hours.`
 
 				// upload to redis
 				ctx, client := redisClient()
-				client.SAdd(ctx, "unwatched", movieName)
+
+				// check for Demo
+				if *DemoMode {
+					s.ChannelMessageSend(e.ChannelID, "*Demo mode enabled, database will not be affected.*")
+				} else {
+					client.SAdd(ctx, "unwatched", movieName)
+				}
 
 				s.ChannelMessageSend(e.ChannelID, "Done!")
 

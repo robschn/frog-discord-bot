@@ -15,6 +15,7 @@ var (
 	BotToken  = flag.String("t", "", "Discord bot access token")
 	RedisUrl  = flag.String("c", "", "Redis database URL to include port")
 	RedisPass = flag.String("p", "", "Redis database password")
+	DemoMode  = flag.Bool("demo", false, "Enable demo mode to leave database untouched")
 )
 
 func init() { flag.Parse() }
