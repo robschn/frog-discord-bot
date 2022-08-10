@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,16 +15,27 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 
 	if e.ChannelID == "864719238279462912" {
 		// check for poll command
-		if e.Content == "!poll movie" {
+		if strings.Contains(e.Content, "!poll movie") {
 
-			// connect to redis database
-			ctx := context.TODO()
+			// initalize hours sleep map
+			var hoursSleep int
 
-			client := redis.NewClient(&redis.Options{
-				Addr:     *RedisUrl,
-				Password: *RedisPass,
-				DB:       0,
-			})
+			// grab time amount
+			if strings.ContainsAny(e.Content, "1234567890.") {
+				stringHours := strings.TrimPrefix(e.Content, "!poll movie ")
+				hoursSleep, _ = strconv.Atoi(stringHours)
+				if hoursSleep > 24 {
+					defaultMessage := fmt.Sprintf("%v hours is too long! Defaulting to 24 hours", hoursSleep)
+					hoursSleep = 24
+					s.ChannelMessageSend(e.ChannelID, defaultMessage)
+				}
+
+			} else {
+				hoursSleep = 4
+			}
+
+			// connect to redis
+			ctx, client := redisClient()
 
 			// grab 3 unwatched movies
 			pickedMovies := client.SRandMemberN(ctx, "unwatched", 3).Val()
@@ -35,9 +48,9 @@ MovieMonday™️ voting is starting!
 💚 - %s
 
 Please click on the emoji below to vote!
-Voting ends at midnight on Sunday.`
+Voting ends in %v hours.`
 
-			votingMessage := fmt.Sprintf(emojiMessage, pickedMovies[0], pickedMovies[1], pickedMovies[2])
+			votingMessage := fmt.Sprintf(emojiMessage, pickedMovies[0], pickedMovies[1], pickedMovies[2], hoursSleep)
 
 			// send message to channel
 			messageInfo, _ := s.ChannelMessageSend(e.ChannelID, votingMessage)
@@ -53,8 +66,8 @@ Voting ends at midnight on Sunday.`
 				s.MessageReactionAdd(messageInfo.ChannelID, messageInfo.ID, i)
 			}
 
-			// sleep for a set time
-			time.Sleep(10 * time.Second)
+			// sleep for time
+			time.Sleep(time.Duration(hoursSleep) * time.Second)
 
 			// grab message info
 			emojiCheck, _ := s.ChannelMessage(messageInfo.ChannelID, messageInfo.ID)
@@ -66,18 +79,45 @@ Voting ends at midnight on Sunday.`
 				}
 			}
 			winnerMovie := emojiHash[emojiCheck.Reactions[0].Emoji.Name]
-			winnerMessage := fmt.Sprintf("The MovieMonday winner is **%s** !", emojiHash[emojiCheck.Reactions[0].Emoji.Name])
+			winnerMessage := fmt.Sprintf("The MovieMonday winner is **%s** !", winnerMovie)
 			s.ChannelMessageSend(messageInfo.ChannelID, winnerMessage)
 
 			// move winnerMovie to watched
-			client.SMove(ctx, "unwatched", "watched", winnerMovie)
+			// client.SMove(ctx, "unwatched", "watched", winnerMovie)
 
 			// close redis connection
 			client.Close()
 		}
 
-		if e.Content == "!poll upload" {
+		if strings.Contains(e.Content, "!poll upload") {
+			// trim the command from message
+			movieName := strings.TrimPrefix(e.Content, "!poll upload ")
+			addMovieMessage := fmt.Sprintf("<@%v> Adding **%v** to MovieMonday Db..", e.Author.ID, movieName)
 
+			// send message if there is no bot command
+			if !(strings.Contains(addMovieMessage, "!poll")) {
+
+				s.ChannelMessageSend(e.ChannelID, addMovieMessage)
+
+				// upload to redis
+				ctx, client := redisClient()
+				client.SAdd(ctx, "unwatched", movieName)
+
+				s.ChannelMessageSend(e.ChannelID, "Done!")
+			}
 		}
 	}
+}
+
+func redisClient() (context.Context, *redis.Client) {
+	// connect to redis database
+	ctx := context.TODO()
+
+	client := redis.NewClient(&redis.Options{
+		Addr:     *RedisUrl,
+		Password: *RedisPass,
+		DB:       0,
+	})
+
+	return ctx, client
 }
