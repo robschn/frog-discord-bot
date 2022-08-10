@@ -27,13 +27,13 @@ func main() {
 		log.Fatalf("Invalid bot parameters: %v", err)
 	}
 
-	// Set Identity Intent for MessageReactions
-	dg.Identify.Intents = discordgo.IntentsGuildMessages
-
 	// Register the functions with for their callback events.
 	dg.AddHandler(reactionAdd)
 	dg.AddHandler(reactionRemove)
 	dg.AddHandler(listenForPoll)
+
+	// Set Identity Intent for functions
+	dg.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuildMessageReactions
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
