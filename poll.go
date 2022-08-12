@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v9"
@@ -27,33 +25,21 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 
 		if botRollCheck {
 
+			votingChannel := "866455048108113941"
+
+			type storeID struct {
+				ChannelID string
+				MessageID string
+			}
+
+			// connect to redis
+			ctx, client := redisClient()
+
 			// check for poll command
 			if strings.Contains(e.Content, "!poll movie") {
 
-				votingChannel := "866455048108113941"
-
-				// initalize hours sleep map
-				var hoursSleep int
-
-				// grab time amount
-				if strings.ContainsAny(e.Content, "1234567890.") {
-					stringHours := strings.TrimPrefix(e.Content, "!poll movie ")
-					hoursSleep, _ = strconv.Atoi(stringHours)
-					if hoursSleep > 48 {
-						defaultMessage := fmt.Sprintf("%v hours is too long! Defaulting to 48 hours", hoursSleep)
-						hoursSleep = 48
-						s.ChannelMessageSend(e.ChannelID, defaultMessage)
-					}
-
-				} else {
-					hoursSleep = 4
-				}
-
 				// send where to vote
 				s.ChannelMessageSend(e.ChannelID, fmt.Sprintf("MovieMonday™️ voting started in <#%v>", votingChannel))
-
-				// connect to redis
-				ctx, client := redisClient()
 
 				// grab 3 unwatched movies
 				pickedMovies := client.SRandMemberN(ctx, "unwatched", 3).Val()
@@ -65,42 +51,63 @@ MovieMonday™️ voting is starting!
 💚 - **%s**
 
 Please click on the emoji below to vote!
-Voting ends in **%v** hours.`
+`
 
-				votingMessage := fmt.Sprintf(emojiMessage, pickedMovies[0], pickedMovies[1], pickedMovies[2], hoursSleep)
+				votingMessage := fmt.Sprintf(emojiMessage, pickedMovies[0], pickedMovies[1], pickedMovies[2])
 
 				// send message to channel
 				messageInfo, _ := s.ChannelMessageSend(votingChannel, votingMessage)
 
+				storeInfo := storeID{
+					ChannelID: messageInfo.ChannelID,
+					MessageID: messageInfo.ID,
+				}
+
 				// add emojis to message
-				emojiHash := map[string]interface{}{
+				// TODO move this to global var
+				// possible need to recontruct from message
+				emojiHash := map[string]string{
 					"🧡": pickedMovies[0],
 					"💛": pickedMovies[1],
 					"💚": pickedMovies[2],
 				}
 
 				for i := range emojiHash {
-					s.MessageReactionAdd(messageInfo.ChannelID, messageInfo.ID, i)
+					s.MessageReactionAdd(storeInfo.ChannelID, storeInfo.MessageID, i)
 				}
 
-				// sleep for time
-				// check for Demo
-				if *DemoMode {
-					time.Sleep(time.Duration(hoursSleep) * time.Second)
-				} else {
-					time.Sleep(time.Duration(hoursSleep) * time.Hour)
+				// store movies to vote for
+				client.HSet(ctx, "voting", emojiHash)
+
+				// store voting message info
+				client.HSet(ctx, "message", storeInfo)
+
+				// close redis connection
+				client.Close()
+			}
+
+			if strings.Contains(e.Content, "!poll count") {
+
+				// grab picked movies info
+				emojiHash := client.HGetAll(ctx, "voting").Val()
+
+				messageInfo := storeID{
+					ChannelID: client.HGet(ctx, "message", "ChannelID").Val(),
+					MessageID: client.HGet(ctx, "message", "MessageID").Val(),
 				}
 
-				// grab message info
-				emojiCheck, _ := s.ChannelMessage(messageInfo.ChannelID, messageInfo.ID)
+				emojiMessage, _ := s.ChannelMessage("string", "string")
+
+				// // grab message info
+				// emojiCheck, _ := s.ChannelMessage(messageInfo.ChannelID, messageInfo.ID)
 
 				// compare counts to return the highest in 0 index
-				for i := 1; i < len(emojiCheck.Reactions); i++ {
-					if emojiCheck.Reactions[0].Count < emojiCheck.Reactions[i].Count {
-						emojiCheck.Reactions[0] = emojiCheck.Reactions[i]
+				for i := 1; i < len(emojiMessage.Reactions); i++ {
+					if emojiMessage.Reactions[0].Count < emojiMessage.Reactions[i].Count {
+						emojiMessage.Reactions[0] = emojiMessage.Reactions[i]
 					}
 				}
-				winnerMovie := emojiHash[emojiCheck.Reactions[0].Emoji.Name]
+				winnerMovie := emojiHash[emojiMessage.Reactions[0].Emoji.Name]
 				winnerMessage := fmt.Sprintf("The MovieMonday winner is **%s** !", winnerMovie)
 				s.ChannelMessageSend(messageInfo.ChannelID, winnerMessage)
 
@@ -125,9 +132,6 @@ Voting ends in **%v** hours.`
 				if !(strings.Contains(addMovieMessage, "!poll")) {
 
 					s.ChannelMessageSend(e.ChannelID, addMovieMessage)
-
-					// upload to redis
-					ctx, client := redisClient()
 
 					// check for Demo
 					if *DemoMode {
