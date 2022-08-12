@@ -58,12 +58,11 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 				// grab 3 unwatched movies
 				pickedMovies := client.SRandMemberN(ctx, "unwatched", 3).Val()
 
-				emojiMessage := `(A)here
-
+				emojiMessage := `
 MovieMonday™️ voting is starting!
-🧡 - %s
-💛 - %s
-💚 - %s
+🧡 - **%s**
+💛 - **%s**
+💚 - **%s**
 
 Please click on the emoji below to vote!
 Voting ends in **%v** hours.`
