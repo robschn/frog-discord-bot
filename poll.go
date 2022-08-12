@@ -50,7 +50,7 @@ func listenForPoll(s *discordgo.Session, e *discordgo.MessageCreate) {
 				}
 
 				// send where to vote
-				s.ChannelMessageSend(e.ChannelID, fmt.Sprintf("Voting started in <#%v>", votingChannel))
+				s.ChannelMessageSend(e.ChannelID, fmt.Sprintf("MovieMonday™️ voting started in <#%v>", votingChannel))
 
 				// connect to redis
 				ctx, client := redisClient()
